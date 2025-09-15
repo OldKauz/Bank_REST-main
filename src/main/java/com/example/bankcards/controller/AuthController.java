@@ -1,5 +1,6 @@
 package com.example.bankcards.controller;
 
+import com.example.bankcards.dto.UserDTO;
 import com.example.bankcards.dto.UserRegistrationDTO;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.security.JwtUtil;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -33,6 +35,28 @@ public class AuthController {
         this.userService = userService;
     }
 
+    // Регистрация
+    @Operation(
+            summary = "Регистрация нового пользователя",
+            description = "Создаёт нового пользователя с указанной ролью (по умолчанию USER)."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Пользователь успешно зарегистрирован",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = UserDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Ошибка валидации", content = @Content)
+    })
+    @PostMapping("/register")
+    public ResponseEntity<UserDTO> register(@Valid @RequestBody UserRegistrationDTO dto) {
+        User created = userService.createUser(dto.getUsername(), dto.getPassword(), dto.getRole());
+        UserDTO out = new UserDTO();
+        out.setId(created.getId());
+        out.setUsername(created.getUsername());
+        out.setRole(created.getRole());
+        return ResponseEntity.ok(out);
+    }
+
+    // Авторизация
     @Operation(
             summary = "Аутентификация пользователя",
             description = "Возвращает JWT-токен для доступа к защищённым ресурсам."

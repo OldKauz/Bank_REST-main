@@ -7,4 +7,6 @@
 
     <include file="db/changelog/changes/create-users-table.xml"/>
     <include file="db/changelog/changes/create-cards-table.xml"/>
+    <include file="db/changelog/changes/rename-card-column.xml"/>
+
 </databaseChangeLog>

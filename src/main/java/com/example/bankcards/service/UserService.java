@@ -14,23 +14,22 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // через конструктор Spring сам внедрит UserRepository
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
-    // Создание пользователя
     public User createUser(String username, String rawPassword, String role) {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new RuntimeException("User with username already exists");
         }
         String encoded = passwordEncoder.encode(rawPassword);
-        User user = new User(username, encoded, role);
+        String finalRole = (role == null || role.isBlank()) ? "USER" : role.toUpperCase();
+        User user = new User(username, encoded, finalRole);
         return userRepository.save(user);
     }
 
-    // Поиск по id
+    // Поиск по ID
     public Optional<User> getUserById(Long id) {
         return userRepository.findById(id);
     }
@@ -40,12 +39,12 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
-    // Получить всех пользователей
+    // Запрос на всех пользователей
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    // Удаление
+    // Удаление пользователя
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }

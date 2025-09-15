@@ -1,5 +1,6 @@
 package com.example.bankcards.entity;
 
+import com.example.bankcards.util.EncryptionUtil;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -12,8 +13,8 @@ public class Card {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "card_number", nullable = false, unique = true)
-    private String cardNumber;
+    @Column(name = "card_number_encrypted", nullable = false, unique = true)
+    private String cardNumberEncrypted;
 
     @Column(name = "expiration_date", nullable = false)
     private LocalDate expirationDate;
@@ -29,27 +30,47 @@ public class Card {
     @JoinColumn(name = "user_id", nullable = false)
     private User owner;
 
+    @Transient
+    private EncryptionUtil encryptionUtil;
+
     public Card() {};
 
-    public Card(Long id, String cardNumber, LocalDate expirationDate, CardStatus status, BigDecimal balance, User owner) {
+    public Card(Long id, String cardNumberEncrypted, LocalDate expirationDate, CardStatus status, BigDecimal balance, User owner) {
         this.id = id;
-        this.cardNumber = cardNumber;
+        this.cardNumberEncrypted = cardNumberEncrypted;
         this.expirationDate = expirationDate;
         this.status = status;
         this.balance = balance;
         this.owner = owner;
     }
 
+    public void setEncryptionUtil(EncryptionUtil encryptionUtil) {
+        this.encryptionUtil = encryptionUtil;
+    }
+
+    public void setCardNumberPlain(String plain) {
+        if (encryptionUtil == null) {
+            throw new IllegalStateException("EncryptionUtil not set");
+        }
+        this.cardNumberEncrypted = encryptionUtil.encrypt(plain);
+    }
+
     public Long getId() {
         return id;
     }
 
-    public String getCardNumber() {
-        return cardNumber;
+    public String getCardNumberEncrypted() {
+        return cardNumberEncrypted;
     }
 
-    public void setCardNumber(String cardNumber) {
-        this.cardNumber = cardNumber;
+    public void setCardNumberEncrypted(String cardNumberEncrypted) {
+        this.cardNumberEncrypted = cardNumberEncrypted;
+    }
+
+    public String getMaskedNumber(EncryptionUtil encryptionUtil) {
+        if (cardNumberEncrypted == null) return null;
+        String decrypted = encryptionUtil.decrypt(cardNumberEncrypted);
+        return "**** **** **** " + decrypted.substring(decrypted.length() - 4);
     }
 
     public LocalDate getExpirationDate() {
@@ -82,6 +103,10 @@ public class Card {
 
     public void setOwner(User owner) {
         this.owner = owner;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }
 

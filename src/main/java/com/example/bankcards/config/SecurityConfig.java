@@ -43,23 +43,26 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // публичные эндпоинты
-                        .requestMatchers("/api/auth/**", "/api/users/register").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
 
                         // ADMIN
                         .requestMatchers(HttpMethod.POST, "/api/cards/create").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/cards/*/block").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/cards/*/activate").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/cards/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/cards/user/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/users**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/users/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/users/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/cards/*").hasRole("ADMIN")
 
                         // USER
+                        .requestMatchers(HttpMethod.GET, "/api/cards/my").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/api/cards/*/request-block").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/api/cards/*/deposit").hasRole("USER")
                         .requestMatchers(HttpMethod.POST, "/api/cards/transfer").hasRole("USER")
-                        .requestMatchers(HttpMethod.GET, "/api/cards/user/**").hasRole("USER")
 
-                        // остальные — требуют авторизации
+                        // ANY с авторизацией
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Tag(name = "Карты", description = "Управление банковскими картами")
@@ -30,10 +31,14 @@ public class CardController {
         this.cardService = cardService;
     }
 
-    @Operation(summary = "Создать новую карту")
+    // Создать карту
+    @Operation(summary = "Создать новую карту (ADMIN)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Карта создана"),
-            @ApiResponse(responseCode = "400", description = "Ошибка при создании карты")
+            @ApiResponse(responseCode = "200", description = "Карта создана",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CardDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Ошибка при создании карты",
+                    content = @Content)
     })
     @PostMapping("/create")
     public ResponseEntity<CardDTO> createCard(
@@ -43,10 +48,28 @@ public class CardController {
         return ResponseEntity.ok(cardService.createCard(userId, cardNumber));
     }
 
-    @Operation(summary = "Посмотреть все карты пользователя")
+    // Посмотреть мои карты USER
+    @Operation(summary = "Посмотреть свои карты (USER)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Карты найдены"),
-            @ApiResponse(responseCode = "404", description = "Карты не найдены")
+            @ApiResponse(responseCode = "200", description = "Карты пользователя найдены",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CardDTO.class)))
+    })
+    @GetMapping("/my")
+    public ResponseEntity<List<CardDTO>> getMyCards(Authentication authentication) {
+        String username = authentication.getName();
+        List<CardDTO> cards = cardService.getCardsByUsername(username);
+        return ResponseEntity.ok(cards);
+    }
+
+    // Посмотреть все карты пользователя. ADMIN
+    @Operation(summary = "Посмотреть карты конкретного пользователя (ADMIN)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Карты найдены",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CardDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Карты не найдены",
+                    content = @Content)
     })
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<CardDTO>> getUserCards(
@@ -55,8 +78,9 @@ public class CardController {
         return ResponseEntity.ok(cardService.getUserCards(userId));
     }
 
+    // Пополнить карту
     @Operation(
-            summary = "Пополнение карты",
+            summary = "Пополнение карты (USER)",
             description = "Позволяет пополнить баланс карты по её ID. Сумма должна быть больше 0."
     )
     @ApiResponses(value = {
@@ -76,8 +100,9 @@ public class CardController {
         return ResponseEntity.ok(cardService.deposit(cardId, request.getAmount()));
     }
 
+    // Перевести на карту
     @Operation(
-            summary = "Перевод между картами",
+            summary = "Перевод между картами (USER)",
             description = "Переводит средства между картами одного пользователя. " +
                     "Сумма должна быть больше 0 и не превышать баланс отправителя."
     )
@@ -94,7 +119,15 @@ public class CardController {
         return ResponseEntity.ok("Перевод успешно выполнен");
     }
 
-    // USER: запрос блoкировки (ставим BLOCK_REQUESTED)
+    // USER: запрос блoкировки (BLOCK_REQUESTED)
+    @Operation(summary = "Запросить блокировку карты (USER)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Запрос на блокировку создан",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CardDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Карта не принадлежит пользователю", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Карта не найдена", content = @Content)
+    })
     @PostMapping("/{cardId}/request-block")
     public ResponseEntity<CardDTO> requestBlock(
             @PathVariable("cardId") Long cardId,
@@ -104,9 +137,12 @@ public class CardController {
         return ResponseEntity.ok(cardService.requestBlock(cardId, username));
     }
 
-    @Operation(summary = "Заблокировать карту")
+    // Блокнуть карту
+    @Operation(summary = "Заблокировать карту (ADMIN)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Карта заблокирована"),
+            @ApiResponse(responseCode = "200", description = "Карта заблокирована",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CardDTO.class))),
             @ApiResponse(responseCode = "404", description = "Карта не найдена")
     })
     @PatchMapping("/{cardId}/block")
@@ -114,9 +150,54 @@ public class CardController {
         return ResponseEntity.ok(cardService.blockCard(cardId));
     }
 
-    // ADMIN: активация карты
+    // Активировать карту
+    @Operation(summary = "Активировать карту (ADMIN)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Карта активирована",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = CardDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Карта не найдена")
+    })
     @PatchMapping("/{cardId}/activate")
     public ResponseEntity<CardDTO> activateCard(@PathVariable("cardId") Long cardId) {
         return ResponseEntity.ok(cardService.activateCard(cardId));
+    }
+
+    // Удалить карту (ADMIN)
+    @Operation(summary = "Удалить карту (ADMIN)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Карта удалена"),
+            @ApiResponse(responseCode = "404", description = "Карта не найдена", content = @Content)
+    })
+    @DeleteMapping("/{cardId}")
+    public ResponseEntity<String> deleteCard(@PathVariable("cardId") Long cardId) {
+        cardService.deleteCard(cardId);
+        return ResponseEntity.ok("Карта успешно удалена");
+    }
+
+    // Фильтр пагинация
+    @Operation(summary = "Получить список всех карт с фильтрацией и пагинацией (ADMIN)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Карты найдены")
+    })
+    @GetMapping("/all")
+    public ResponseEntity<List<CardDTO>> getAllCards(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "status", required = false) String status
+    ) {
+        return ResponseEntity.ok(cardService.getAllCards(page, size, status));
+    }
+
+
+    // Баланс
+    @Operation(summary = "Посмотреть баланс карты")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Баланс получен"),
+            @ApiResponse(responseCode = "404", description = "Карта не найдена")
+    })
+    @GetMapping("/{cardId}/balance")
+    public ResponseEntity<BigDecimal> getCardBalance(@PathVariable("cardId") Long cardId) {
+        return ResponseEntity.ok(cardService.getBalance(cardId));
     }
 }

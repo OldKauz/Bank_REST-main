@@ -18,7 +18,6 @@ public class OpenApiConfig {
                         .title("Bank Card Management API")
                         .version("1.0")
                         .description("REST API для управления банковскими картами"))
-                // подключаем схему безопасности
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components()
                         .addSecuritySchemes("bearerAuth",

@@ -23,3 +23,7 @@ logging:
   level:
     org.hibernate.SQL: debug
     org.hibernate.type.descriptor.sql: trace
+
+app:
+  jwt-secret: mysecretkeymysecretkeymysecretkey123
+  aes-key: 1234567890123456

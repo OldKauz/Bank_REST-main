@@ -2,6 +2,7 @@ package com.example.bankcards.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -9,21 +10,30 @@ import java.util.Date;
 
 @Component
 public class JwtUtil {
-    private static final String SECRET = "mysecretkeymysecretkeymysecretkey123"; // лучше вынести в application.yml
-    private static final long EXPIRATION_TIME = 1000 * 60 * 15; // 15 минут
 
-    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+    private final Key key;
+    private final long expirationTime;
+
+    public JwtUtil(
+            @Value("${app.jwt-secret}") String secret,
+            @Value("${app.jwt-expiration-ms:900000}") long expirationTime // 15 мин по умолчанию
+    ) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.expirationTime = expirationTime;
+    }
+
 
     // Создать токен
     public String generateToken(String username, String role) {
         return Jwts.builder()
-                .setSubject(username) // sub: имя пользователя
-                .claim("role", role)  // кастомное поле
+                .setSubject(username)
+                .claim("role", role)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
+
 
     // Извлечь username
     public String extractUsername(String token) {

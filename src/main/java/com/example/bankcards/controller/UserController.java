@@ -1,7 +1,6 @@
 package com.example.bankcards.controller;
 
 import com.example.bankcards.dto.UserDTO;
-import com.example.bankcards.dto.UserRegistrationDTO;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,14 +10,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Tag(name = "Пользователи", description = "Управление пользователями")
+@Tag(name = "Пользователи", description = "Управление пользователями (ADMIN)")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/users")
@@ -30,27 +28,12 @@ public class UserController {
         this.userService = userService;
     }
 
-
-    @Operation(
-            summary = "Регистрация нового пользователя",
-            description = "Создаёт нового пользователя с ролью USER."
-    )
+    // Запрос на всех пользователей
+    @Operation(summary = "Получить список всех пользователей (ADMIN)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Пользователь успешно зарегистрирован",
+            @ApiResponse(responseCode = "200", description = "Список пользователей получен",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = UserDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Ошибка валидации", content = @Content)
-    })
-    @PostMapping("/register")
-    public ResponseEntity<UserDTO> register(@Valid @RequestBody UserRegistrationDTO dto) {
-        User created = userService.createUser(dto.getUsername(), dto.getPassword(), dto.getRole());
-        UserDTO out = toDto(created);
-        return ResponseEntity.ok(out);
-    }
-
-    @Operation(summary = "Получить список всех пользователей")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Список пользователей получен")
+                            schema = @Schema(implementation = UserDTO.class)))
     })
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers() {
@@ -58,9 +41,11 @@ public class UserController {
         return ResponseEntity.ok(list);
     }
 
-    @Operation(summary = "Получить пользователя по id")
+    // Запрос на пользователя по ID
+    @Operation(summary = "Получить пользователя по id (ADMIN)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Пользователь получен")
+            @ApiResponse(responseCode = "200", description = "Пользователь получен"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден")
     })
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getById(@PathVariable("id") Long id) {
@@ -68,7 +53,8 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @Operation(summary = "Удалить пользователя")
+    // Запрос на удаления пользователя по ID
+    @Operation(summary = "Удалить пользователя (ADMIN)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Пользователь удалён"),
             @ApiResponse(responseCode = "404", description = "Пользователь не найден")

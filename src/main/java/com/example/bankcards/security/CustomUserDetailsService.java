@@ -19,7 +19,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-        // Spring ожидает роли с префиксом "ROLE_"
         GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole());
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),

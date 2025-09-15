@@ -3,11 +3,11 @@ package com.example.bankcards.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users") // привязка к таблице в БД
+@Table(name = "users")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // BIGSERIAL в Postgres
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true, length = 100)
@@ -19,7 +19,6 @@ public class User {
     @Column(nullable = false, length = 50)
     private String role;
 
-    // 🔹 Конструкторы
     public User() {
     }
 
@@ -29,7 +28,6 @@ public class User {
         this.role = role;
     }
 
-    // 🔹 Геттеры и сеттеры
     public Long getId() {
         return id;
     }
