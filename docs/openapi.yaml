@@ -1,1 +1,384 @@
-# Здесь будет OpenAPI описание всех доступных эндпоинтов и моделей данных.
+openapi: 3.0.1
+info:
+  title: Bank Card Management API
+  description: REST API для управления банковскими картами
+  version: "1.0"
+servers:
+- url: http://localhost:8080
+  description: Generated server url
+security:
+- bearerAuth: []
+tags:
+- name: Пользователи
+  description: Управление пользователями
+- name: Карты
+  description: Управление банковскими картами
+- name: Аутентификация
+  description: Регистрация и вход пользователей
+paths:
+  /api/users/register:
+    post:
+      tags:
+      - Пользователи
+      summary: Регистрация нового пользователя
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationDTO'
+        required: true
+      responses:
+        "200":
+          description: Пользователь успешно зарегистрирован
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        "400":
+          description: Ошибка валидации данных
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+      security:
+      - bearerAuth: []
+  /api/cards/{cardId}/request-block:
+    post:
+      tags:
+      - Карты
+      operationId: requestBlock
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CardDTO'
+      security:
+      - bearerAuth: []
+  /api/cards/{cardId}/deposit:
+    post:
+      tags:
+      - Карты
+      summary: Пополнить баланс карты
+      operationId: deposit
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: amount
+        in: query
+        required: true
+        schema:
+          type: number
+      responses:
+        "404":
+          description: Карта не найдена
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CardDTO'
+        "200":
+          description: Баланс пополнен
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CardDTO'
+      security:
+      - bearerAuth: []
+  /api/cards/transfer:
+    post:
+      tags:
+      - Карты
+      summary: Сделать перевод между своими картами
+      operationId: transfer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+        required: true
+      responses:
+        "404":
+          description: Одна из карт не найдена
+          content:
+            '*/*':
+              schema:
+                type: string
+        "400":
+          description: Недостаточно средств
+          content:
+            '*/*':
+              schema:
+                type: string
+        "200":
+          description: Перевод выполнен
+          content:
+            '*/*':
+              schema:
+                type: string
+      security:
+      - bearerAuth: []
+  /api/cards/create:
+    post:
+      tags:
+      - Карты
+      summary: Создать новую карту
+      operationId: createCard
+      parameters:
+      - name: userId
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: cardNumber
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "400":
+          description: Ошибка при создании карты
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CardDTO'
+        "200":
+          description: Карта создана
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CardDTO'
+      security:
+      - bearerAuth: []
+  /api/auth/login:
+    post:
+      tags:
+      - Аутентификация
+      summary: Регистрация нового пользователя
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationDTO'
+        required: true
+      responses:
+        "200":
+          description: Пользователь успешно зарегистрирован
+          content:
+            '*/*':
+              schema:
+                type: object
+        "400":
+          description: Ошибка валидации данных
+          content:
+            '*/*':
+              schema:
+                type: object
+  /api/cards/{cardId}/block:
+    patch:
+      tags:
+      - Карты
+      summary: Заблокировать карту
+      operationId: blockCard
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "404":
+          description: Карта не найдена
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CardDTO'
+        "200":
+          description: Карта заблокирована
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CardDTO'
+      security:
+      - bearerAuth: []
+  /api/cards/{cardId}/activate:
+    patch:
+      tags:
+      - Карты
+      operationId: activateCard
+      parameters:
+      - name: cardId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CardDTO'
+      security:
+      - bearerAuth: []
+  /api/users:
+    get:
+      tags:
+      - Пользователи
+      summary: Получить список всех пользователей
+      operationId: getAllUsers
+      responses:
+        "200":
+          description: Список пользователей получен
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserDTO'
+      security:
+      - bearerAuth: []
+  /api/users/{id}:
+    get:
+      tags:
+      - Пользователи
+      summary: Получить пользователя по id
+      operationId: getById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Пользователь получен
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Пользователи
+      summary: Удалить пользователя
+      operationId: delete
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "404":
+          description: Пользователь не найден
+        "200":
+          description: Пользователь удалён
+      security:
+      - bearerAuth: []
+  /api/cards/user/{userId}:
+    get:
+      tags:
+      - Карты
+      summary: Посмотреть все карты пользователя
+      operationId: getUserCards
+      parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "404":
+          description: Карты не найдены
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CardDTO'
+        "200":
+          description: Карты найдены
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CardDTO'
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    UserRegistrationDTO:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        role:
+          type: string
+    CardDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        maskedCardNumber:
+          type: string
+        status:
+          type: string
+        balance:
+          type: number
+        ownerId:
+          type: integer
+          format: int64
+        ownerUsername:
+          type: string
+    TransferRequest:
+      type: object
+      properties:
+        fromCardId:
+          type: integer
+          format: int64
+        toCardId:
+          type: integer
+          format: int64
+        amount:
+          type: number
+  securitySchemes:
+    bearerAuth:
+      type: http
+      name: bearerAuth
+      scheme: bearer
+      bearerFormat: JWT
